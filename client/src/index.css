@@ -1,0 +1,9 @@
+*{
+    box-sizing: border-box;
+}
+@font-face {
+    font-family: 'Nasalization';
+    src: url('../src/assets/font/nasalization-rg.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+  }
