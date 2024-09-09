@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Box from "@mui/material/Box";
 import ReactPlayer from "react-player";
-import { motion, AnimatePresence } from "framer-motion";
 import Button from "@mui/material/Button";
 import logo from "../assets/logo/Bee-social-logo-Final-bee.png";
 import bgImg from "../assets/mainBackground/1080x1920 bg windows.png";
@@ -19,60 +18,27 @@ import gif from "../assets/gif/s23-comment.gif";
 import gif1 from "../assets/gif/clearing_throat.gif";
 import "../index.css";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/bundle";
-import Avatar from "@mui/material/Avatar";
+import io from "socket.io-client";
+import { Navigation } from "swiper/modules";
+
+const socket = io("http://localhost:4000", {
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+});
 
 export default function MainScreen() {
-  // const [showAnimation, setShowAnimation] = useState(false);
   const [removeBackground, setRemoveBackground] = useState(false);
   const [isLive, setIsLive] = useState(false);
   const [changeLanguage, setChangeLanguage] = useState(false);
-  const info = [
-    {
-      name: "Tasin",
-      comment: "hi",
-      imgUrl:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQTSKbCFe_QYSVH-4FpaszXvakr2Eti9eAJpQ&s",
-      yValue: 0,
-    },
-    {
-      name: "Dinar",
-      comment: "hello",
-      imgUrl:
-        "https://i.pinimg.com/236x/db/1f/9a/db1f9a3eaca4758faae5f83947fa807c.jpg",
-      yValue: 78,
-    },
-    {
-      name: "Rusho",
-      comment: "looks good",
-      imgUrl:
-        "https://media.sproutsocial.com/uploads/2022/06/profile-picture.jpeg",
-      yValue: 156,
-    },
-    {
-      name: "Remo",
-      comment: "cute",
-      imgUrl:
-        "https://png.pngtree.com/thumb_back/fh260/background/20230612/pngtree-man-wearing-glasses-is-wearing-colorful-background-image_2905240.jpg",
-      yValue: 234,
-    },
-    {
-      name: "Soumik",
-      comment: "awesome",
-      imgUrl:
-        "https://play-lh.googleusercontent.com/7oW_TFaC5yllHJK8nhxHLQRCvGDE8jYIAc2SWljYpR6hQlFTkbA6lNvER1ZK-doQnQ=w240-h480-rw",
-      yValue: 312,
-    },
-    // ,
-    // {
-    //   name: "Sushi",
-    //   comment: "wow !",
-    //   imgUrl: "https://pics.craiyon.com/2023-11-15/NFfo8Fq5SC-QlFZzS4ge3Q.webp",
-    //   yValue: 390,
-    // },
-  ];
+  const [showTranslating, setShowTranslating] = useState(false);
+  const [showBackgrounds, setShowBackgrounds] = useState(false);
+  const [showClearingThroat, setShowClearingThroat] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const swiperRef = useRef(null);
+
   const backgroundImg = [
     file1,
     // file2,
@@ -83,6 +49,65 @@ export default function MainScreen() {
     file7,
     file8,
   ];
+
+  const handleClearingThroatToggle = useCallback((data) => {
+    setShowClearingThroat(data.showClearingThroat);
+  }, []);
+
+  const handleCommentToggle = useCallback((data) => {
+    setShowComments(data.showComments);
+  }, []);
+
+  const handleTranslate = useCallback((data) => {
+    setShowTranslating(data.showTranslating);
+  }, []);
+
+  const handleRemoveBackground = useCallback((data) => {
+    setShowBackgrounds(data.showBackgrounds);
+  }, []);
+
+  useEffect(() => {
+    socket.on("togglePlayback", handleCommentToggle);
+    return () => {
+      socket.off("togglePlayback", handleCommentToggle);
+    };
+  }, [handleCommentToggle]);
+
+  useEffect(() => {
+    socket.on("toggleClearingThroat", handleClearingThroatToggle);
+    return () => {
+      socket.off("toggleClearingThroat", handleClearingThroatToggle);
+    };
+  }, [handleClearingThroatToggle]);
+
+  useEffect(() => {
+    socket.on("toggleTranslating", handleTranslate);
+    return () => {
+      socket.off("toggleTranslating", handleTranslate);
+    };
+  }, [handleTranslate]);
+
+  useEffect(() => {
+    socket.on("toggleBackgrounds", handleRemoveBackground);
+    return () => {
+      socket.off("toggleBackgrounds", handleRemoveBackground);
+    };
+  }, [handleRemoveBackground]);
+
+  useEffect(() => {
+    socket.on("navigate", (direction) => {
+      if (swiperRef.current) {
+        if (direction === "next") {
+          swiperRef.current.swiper.slideNext();
+        } else if (direction === "prev") {
+          swiperRef.current.swiper.slidePrev();
+        }
+      }
+    });
+
+    return () => socket.off("navigate");
+  }, []);
+
   return (
     <>
       <ReactPlayer
@@ -139,8 +164,11 @@ export default function MainScreen() {
               aspectRatio: "16/9",
             }}
           >
-            {removeBackground && (
+            {showBackgrounds && (
               <Swiper
+                ref={swiperRef}
+                navigation={{ nextEl: "#swiper-next", prevEl: "#swiper-prev" }}
+                modules={[Navigation]}
                 direction="vertical"
                 spaceBetween={10}
                 slidesPerView={3}
@@ -176,13 +204,12 @@ export default function MainScreen() {
               }}
               onClick={() => setRemoveBackground(!removeBackground)}
             >
-              {removeBackground ? "BACKGROUNDS" : "REMOVE BG"}
+              {showBackgrounds ? "BACKGROUNDS" : "REMOVE BG"}
             </Button>
           </Box>
         </Box>
         <Box
           sx={{
-            //bgcolor: "lightblue",
             flex: "4",
             display: "flex",
             alignItems: "center",
@@ -196,7 +223,6 @@ export default function MainScreen() {
               flex: "3",
               aspectRatio: "1/cos(30deg)",
               overflow: "hidden",
-              // clipPath: "polygon(50% -50%, 100% 50%, 50% 150%, 0 50%)",
               position: "relative",
               paddingTop: "46.26%",
               overflow: "hidden",
@@ -289,7 +315,7 @@ export default function MainScreen() {
               borderRadius: "50px",
             }}
           >
-            {changeLanguage ? (
+            {showTranslating ? (
               <Box sx={{ display: "flex", gap: "5px" }}>
                 <Button
                   sx={{
@@ -355,7 +381,11 @@ export default function MainScreen() {
             <img
               src={gif1}
               alt=""
-              style={{ width: "230px", height: "230px" }}
+              style={{
+                width: "230px",
+                height: "230px",
+                visibility: showClearingThroat ? "visible" : "hidden",
+              }}
             />
           </Box>
           <Box
@@ -369,7 +399,14 @@ export default function MainScreen() {
               width: "100%",
             }}
           >
-            <img src={gif} alt="" style={{ width: "100%" }} />
+            <img
+              src={gif}
+              alt=""
+              style={{
+                width: "100%",
+                visibility: showComments ? "visible" : "hidden",
+              }}
+            />
           </Box>
         </Box>
       </Box>
