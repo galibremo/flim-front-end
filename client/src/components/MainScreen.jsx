@@ -16,6 +16,7 @@ import MicNoneIcon from "@mui/icons-material/MicNone";
 import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
 import gif from "../assets/gif/s23-comment.gif";
 import gif1 from "../assets/gif/clearing_throat.gif";
+import gif2 from "../assets/gif/Dot_start-live.gif";
 import "../index.css";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -37,6 +38,7 @@ export default function MainScreen() {
   const [showBackgrounds, setShowBackgrounds] = useState(false);
   const [showClearingThroat, setShowClearingThroat] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showLive, setShowLive] = useState(false);
   const swiperRef = useRef(null);
 
   const backgroundImg = [
@@ -64,6 +66,10 @@ export default function MainScreen() {
 
   const handleRemoveBackground = useCallback((data) => {
     setShowBackgrounds(data.showBackgrounds);
+  }, []);
+
+  const handleShowLive = useCallback((data) => {
+    setShowLive(data.showLive);
   }, []);
 
   useEffect(() => {
@@ -95,6 +101,13 @@ export default function MainScreen() {
   }, [handleRemoveBackground]);
 
   useEffect(() => {
+    socket.on("toggleLive", handleShowLive);
+    return () => {
+      socket.off("toggleLive", handleShowLive);
+    };
+  }, [handleShowLive]);
+
+  useEffect(() => {
     socket.on("navigate", (direction) => {
       if (swiperRef.current) {
         if (direction === "next") {
@@ -112,7 +125,8 @@ export default function MainScreen() {
     <>
       <ReactPlayer
         url="https://www.twitch.tv/galibremo"
-        playing
+        playing={true}
+        muted={true}
         width="65%"
         height="80%"
         style={{
@@ -172,6 +186,17 @@ export default function MainScreen() {
                 direction="vertical"
                 spaceBetween={10}
                 slidesPerView={3}
+                centeredSlides={true}
+                onSlideChange={(swiper) => {
+                  const allSlides = swiper.slides;
+                  allSlides.forEach((slide, index) => {
+                    if (index === swiper.activeIndex) {
+                      slide.style.transform = "scale(1.1)"; // Make the active slide larger
+                    } else {
+                      slide.style.transform = "scale(1)"; // Reset size for other slides
+                    }
+                  });
+                }}
                 style={{ width: "100%", height: "100%" }}
               >
                 {backgroundImg.map((img, index) => (
@@ -184,6 +209,7 @@ export default function MainScreen() {
                         height: "100%",
                         objectFit: "cover",
                         borderRadius: "10px",
+                        transition: "transform 0.3s ease",
                       }}
                     />
                   </SwiperSlide>
@@ -247,48 +273,66 @@ export default function MainScreen() {
                 alignItems: "center",
                 justifyContent: "center",
                 height: "60%",
-                gap: "35px",
+                gap: "15px",
                 borderRadius: "50px",
               }}
             >
-              <Button
-                size="large"
-                sx={{
-                  borderRadius: "50px",
-                  fontFamily: "Nasalization, sans-serif",
-                  backgroundColor: isLive ? "defaultColor" : "#f44336",
-                  padding: "15px 30px",
-                }}
-                variant={isLive ? "text" : "contained"}
-                onClick={() => setIsLive(!isLive)}
-              >
-                {isLive ? "End Live" : "Start Live"}
-              </Button>
               <Box
                 sx={{
-                  borderRadius: "50%",
-                  width: "50px",
-                  height: "50px",
-                  bgcolor: "#dcdcdc",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <MicNoneIcon />
+                <Button
+                  size="large"
+                  sx={{
+                    borderRadius: "50px",
+                    fontFamily: "Nasalization, sans-serif",
+                    backgroundColor: showLive ? "defaultColor" : "#f44336",
+                    padding: "15px 30px",
+                  }}
+                  variant={showLive ? "text" : "contained"}
+                  onClick={() => setIsLive(!isLive)}
+                >
+                  {showLive ? "End Live" : "Start Live"}
+                </Button>
+                {showLive && <img src={gif2} width={"50px"} height={"50px"} />}
               </Box>
               <Box
                 sx={{
-                  borderRadius: "50%",
-                  width: "50px",
-                  height: "50px",
-                  bgcolor: "#dcdcdc",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  gap: "15px",
                 }}
               >
-                <VideocamOutlinedIcon />
+                <Box
+                  sx={{
+                    borderRadius: "50%",
+                    width: "50px",
+                    height: "50px",
+                    bgcolor: "#dcdcdc",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <MicNoneIcon />
+                </Box>
+                <Box
+                  sx={{
+                    borderRadius: "50%",
+                    width: "50px",
+                    height: "50px",
+                    bgcolor: "#dcdcdc",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <VideocamOutlinedIcon />
+                </Box>
               </Box>
             </Box>
           </Box>

@@ -17,6 +17,7 @@ const ButtonComponent = () => {
   const [isClearingThroat, setIsClearingThroat] = useState(false);
   const [isTranslateing, setIsTranslateing] = useState(false);
   const [isBgCning, setIsBgCning] = useState(false);
+  const [isLive, setIsLive] = useState(false);
 
   const handleClick = useCallback(() => {
     const newPlayingState = !isShowing;
@@ -47,6 +48,14 @@ const ButtonComponent = () => {
     });
     setIsBgCning(newPlayingState);
   }, [isBgCning]);
+
+  const showLive = useCallback(() => {
+    const newPlayingState = !isLive;
+    socket.emit("toggleLive", {
+      showLive: newPlayingState,
+    });
+    setIsLive(newPlayingState);
+  }, [isLive]);
 
   const handleNext = () => {
     socket.emit("navigate", "next");
@@ -107,6 +116,16 @@ const ButtonComponent = () => {
         }}
       >
         {isBgCning ? "Hide Backgrounds" : "Show Backgrounds"}
+      </Button>
+      <Button
+        variant="contained"
+        onClick={showLive}
+        sx={{
+          marginTop: "20px",
+          maxWidth: "300px",
+        }}
+      >
+        {isLive ? "Hide Live" : "Show Live"}
       </Button>
       <Box id="swiper-prev">
         <ArrowUpwardIcon

@@ -1,9 +1,18 @@
-*{
-    box-sizing: border-box;
+* {
+  box-sizing: border-box;
 }
 @font-face {
-    font-family: 'Nasalization';
-    src: url('../src/assets/font/nasalization-rg.otf') format('opentype');
-    font-weight: normal;
-    font-style: normal;
-  }
+  font-family: "Nasalization";
+  src: url("../src/assets/font/nasalization-rg.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+}
+.swiper-slide-active {
+  transition: transform 0.5s ease-in-out;
+  transform: scale(1.1); /* Scale the active slide */
+}
+
+.swiper-slide {
+  transition: transform 0.5s ease-in-out;
+  transform: scale(0.9); /* Scale down the inactive slides */
+}

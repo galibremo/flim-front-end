@@ -68,6 +68,13 @@ io.on("connection", (socket) => {
     });
   });
 
+  socket.on("toggleLive", (data) => {
+    console.log("Received togglePlayback event from client:", data.showLive);
+    io.emit("toggleLive", {
+      showLive: data.showLive,
+    });
+  });
+
   socket.on("navigate", (direction) => {
     io.emit("navigate", direction);
   });
