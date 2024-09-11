@@ -121,10 +121,77 @@ export default function MainScreen() {
     return () => socket.off("navigate");
   }, []);
 
+  const videoRef = useRef(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const getVideoDevices = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(
+          (device) => device.kind === "videoinput"
+        );
+        const obsCamera = videoDevices.find((device) =>
+          device.label.includes("OBS Virtual Camera")
+        ); // Adjust label check if needed
+
+        if (obsCamera) {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { deviceId: obsCamera.deviceId },
+          });
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play();
+          }
+        } else {
+          setError("OBS Virtual Camera not found.");
+        }
+      } catch (err) {
+        console.error("Error accessing the virtual camera:", err);
+        setError("Could not access the virtual camera.");
+      }
+    };
+
+    getVideoDevices();
+  }, []);
+
   return (
     <>
-      <ReactPlayer
-        url="https://www.twitch.tv/galibremo"
+      <div>
+        {error ? (
+          <p>{error}</p>
+        ) : (
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            width="1220px"
+            height="750px"
+            style={{
+              position: "absolute",
+              zIndex: "1",
+              top: "43.5%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+            }}
+          />
+        )}
+      </div>
+      {/* <iframe
+        src="http://192.168.23.158:8000/camera/"
+        allowFullScreen
+        style={{
+          width: "850px",
+          height: "700px",
+          position: "absolute",
+          zIndex: "1",
+          top: "45%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      ></iframe> */}
+      {/* <ReactPlayer
+        url="http://192.168.23.158:8000/camera/"
         playing={true}
         muted={true}
         width="65%"
@@ -136,7 +203,7 @@ export default function MainScreen() {
           left: "50%",
           transform: "translate(-50%, -50%)",
         }}
-      />
+      /> */}
       <Box
         sx={{
           display: "flex",
@@ -190,10 +257,17 @@ export default function MainScreen() {
                 onSlideChange={(swiper) => {
                   const allSlides = swiper.slides;
                   allSlides.forEach((slide, index) => {
+                    const img = slide.querySelector("img");
                     if (index === swiper.activeIndex) {
-                      slide.style.transform = "scale(1.1)"; // Make the active slide larger
+                      // slide.style.transform = "scale(1.12)";
+                      img.style.opacity = "1";
+                      img.style.border = "3px solid #f5b02d";
+                      img.style.boxSizing = "border-box";
                     } else {
-                      slide.style.transform = "scale(1)"; // Reset size for other slides
+                      // slide.style.transform = "scale(1)";
+                      img.style.opacity = "0.7";
+                      img.style.border = "none";
+                      img.style.boxSizing = "border-box";
                     }
                   });
                 }}
